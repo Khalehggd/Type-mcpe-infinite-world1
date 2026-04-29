@@ -1,0 +1,182 @@
+════════════════════════════════════════════════════════════════
+  MINECRAFT PE 0.6.1 - INFINITE WORLD MOD - BUILD INSTRUCTIONS
+════════════════════════════════════════════════════════════════
+
+🎉 WHAT'S BEEN MODIFIED:
+- Level.cpp has been patched for INFINITE WORLD GENERATION
+- No more 256×256 block limit!
+- World generates infinitely in X and Z directions
+
+════════════════════════════════════════════════════════════════
+  OPTION A: BUILD ON WINDOWS PC (EASIEST - 30 MINUTES)
+════════════════════════════════════════════════════════════════
+
+📥 REQUIREMENTS:
+1. Windows 10/11
+2. Android NDK r14b
+   Download: https://dl.google.com/android/repository/android-ndk-r14b-windows-x86_64.zip
+   Extract to: C:\android-ndk-r14b
+
+3. Android SDK Build Tools
+   Install via Android Studio: https://developer.android.com/studio
+   
+4. Java JDK 8 or newer
+   Download: https://adoptium.net/
+
+🔧 BUILD STEPS:
+
+1. Extract this project to C:\mcpe64-INFINITE-WORLD
+
+2. Open PowerShell and navigate to the project:
+   cd C:\mcpe64-INFINITE-WORLD
+
+3. Run the build script:
+   .\build.ps1
+
+4. APK will be created at:
+   C:\apkbuild\minecraftpe-debug.apk
+
+5. Transfer APK to your phone and install!
+
+════════════════════════════════════════════════════════════════
+  OPTION B: BUILD ON LINUX (ADVANCED)
+════════════════════════════════════════════════════════════════
+
+📥 REQUIREMENTS:
+sudo apt install openjdk-11-jdk android-sdk-build-tools
+
+# Download NDK r14b
+wget https://dl.google.com/android/repository/android-ndk-r14b-linux-x86_64.zip
+unzip android-ndk-r14b-linux-x86_64.zip -d ~/
+
+🔧 BUILD STEPS:
+
+1. Navigate to project:
+   cd ~/mcpe64-INFINITE-WORLD/project/android/jni
+
+2. Build native library:
+   ~/android-ndk-r14b/ndk-build
+
+3. Compile Java code:
+   cd ../android_java
+   javac -d classes -classpath $ANDROID_HOME/platforms/android-21/android.jar src/**/*.java
+
+4. Create DEX file:
+   dx --dex --output=classes.dex classes/
+
+5. Package APK:
+   aapt package -f -m -J gen -S res -M AndroidManifest.xml -I $ANDROID_HOME/platforms/android-21/android.jar
+   aapt package -f -M AndroidManifest.xml -S res -I $ANDROID_HOME/platforms/android-21/android.jar -F minecraftpe-unsigned.apk
+
+6. Add compiled code:
+   aapt add minecraftpe-unsigned.apk classes.dex
+   aapt add minecraftpe-unsigned.apk libs/arm64-v8a/libminecraftpe.so
+
+7. Sign APK:
+   keytool -genkeypair -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -dname "CN=Debug"
+   apksigner sign --ks debug.keystore --ks-pass pass:android minecraftpe-unsigned.apk
+
+════════════════════════════════════════════════════════════════
+  OPTION C: BUILD ON PHONE WITH TERMUX (VERY SLOW - 3+ HOURS)
+════════════════════════════════════════════════════════════════
+
+⚠️ WARNING: This will be slow and may fail!
+
+1. Install Termux from F-Droid (NOT Google Play)
+   https://f-droid.org/en/packages/com.termux/
+
+2. In Termux, run:
+   pkg update
+   pkg install clang make cmake git wget openjdk-17 aapt apksigner dx
+
+3. Download Android NDK for Android:
+   wget https://dl.google.com/android/repository/android-ndk-r14b-linux-x86_64.zip
+   unzip android-ndk-r14b-linux-x86_64.zip
+
+4. Follow Linux build steps above (but VERY SLOW on phone)
+
+════════════════════════════════════════════════════════════════
+  OPTION D: USE ONLINE BUILD SERVICE (NO SETUP NEEDED)
+════════════════════════════════════════════════════════════════
+
+🌐 Upload this project to one of these services:
+
+1. GitHub Actions (FREE)
+   - Create GitHub account
+   - Upload project
+   - Set up Android build workflow
+   - Download built APK
+
+2. AppCenter (Microsoft - FREE tier)
+   - Sign up: https://appcenter.ms/
+   - Connect repository
+   - Configure Android build
+   - Download APK
+
+════════════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+════════════════════════════════════════════════════════════════
+
+❌ Build fails with "NDK not found"
+   → Make sure NDK r14b is at C:\android-ndk-r14b (Windows)
+   → Or export NDK_HOME=/path/to/ndk (Linux)
+
+❌ "javac not found"
+   → Install Java JDK and add to PATH
+
+❌ "aapt not found"  
+   → Install Android SDK Build Tools
+
+❌ APK won't install on phone
+   → Enable "Install from Unknown Sources" in Settings
+   → Make sure APK is signed
+
+❌ Game crashes on launch
+   → Make sure you're using ARM64 device (most modern phones)
+   → Check logcat: adb logcat | grep minecraft
+
+════════════════════════════════════════════════════════════════
+  WHAT WAS CHANGED IN THE CODE
+════════════════════════════════════════════════════════════════
+
+File: src/world/level/Level.cpp
+
+Changes:
+✓ Removed all X/Z boundary checks (9 functions modified)
+✓ Kept Y-axis limits (bedrock to sky)
+✓ World now generates infinitely in horizontal directions
+✓ No more 256×256 limit!
+
+Functions modified:
+- getTile()
+- getData()
+- getBrightness()
+- getRawBrightness()
+- setBrightness()
+- isSkyLit()
+- setTileAndDataNoUpdate()
+- setDataNoUpdate()
+- setTileNoUpdate()
+- getHeightmap()
+
+════════════════════════════════════════════════════════════════
+  TESTING YOUR BUILD
+════════════════════════════════════════════════════════════════
+
+After installing the APK:
+
+1. Create a new world
+2. Walk past coordinates X=256 or Z=256
+3. Press F3 to see coordinates
+4. World should continue generating!
+
+If it works, you have infinite worlds! 🌍✨
+
+════════════════════════════════════════════════════════════════
+  NEED HELP?
+════════════════════════════════════════════════════════════════
+
+Join the Discord: https://discord.gg/ryZ884DWJf
+Original repo: https://gitea.sffempire.ru/Kolyah35/minecraft-pe-0.6.1
+
+Good luck! 🎮

@@ -26,7 +26,8 @@ jobs:
 
     - name: Build with Gradle
       run: |
-        ./gradlew assembleDebug --stacktrace
+        cd mcpe64-INFINITE-WORLD
+        gradle assembleDebug --stacktrace
 
     - name: Upload APK
       if: success()

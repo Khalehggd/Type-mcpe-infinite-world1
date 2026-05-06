@@ -24,10 +24,8 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
 
-    - name: Build with Gradle
-      run: |
-        cd mcpe64-INFINITE-WORLD
-        gradle assembleDebug --stacktrace
+    - name: Build with Gradle (from root)
+      run: gradle assembleDebug --stacktrace
 
     - name: Upload APK
       if: success()

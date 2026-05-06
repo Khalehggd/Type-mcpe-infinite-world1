@@ -1,0 +1,3 @@
+rootProject.name = "MinecraftPE-InfiniteWorld"
+include ':app'
+project(':app').projectDir = new File(settingsDir, 'mcpe64-INFINITE-WORLD/app')

@@ -1,0 +1,16 @@
+// Root build.gradle for Type-mcpe-infinite-world1/mcpe64-INFINITE-WORLD/
+
+plugins {
+    id 'com.android.application' version '8.1.0' apply false
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

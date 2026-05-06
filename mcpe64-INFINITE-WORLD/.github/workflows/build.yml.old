@@ -1,0 +1,96 @@
+name: Build Minecraft PE APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+    
+    - name: Download Android NDK r14b
+      run: |
+        wget https://dl.google.com/android/repository/android-ndk-r14b-linux-x86_64.zip
+        unzip -q android-ndk-r14b-linux-x86_64.zip
+        echo "NDK_HOME=$PWD/android-ndk-r14b" >> $GITHUB_ENV
+    
+    - name: Install Android SDK Build Tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y android-sdk google-android-build-tools-installer
+        
+    - name: Build native library
+      run: |
+        cd project/android/jni
+        $NDK_HOME/ndk-build
+    
+    - name: Setup build directory
+      run: |
+        mkdir -p build/classes
+        mkdir -p build/gen
+        mkdir -p build/lib/arm64-v8a
+        cp project/android/libs/arm64-v8a/libminecraftpe.so build/lib/arm64-v8a/
+    
+    - name: Generate R.java
+      run: |
+        aapt package -f -m -J build/gen \
+          -S project/android_java/res \
+          -M project/android_java/AndroidManifest.xml \
+          -I /usr/lib/android-sdk/platforms/android-21/android.jar
+    
+    - name: Compile Java code
+      run: |
+        find project/android_java/src -name "*.java" > sources.txt
+        javac -d build/classes \
+          -classpath /usr/lib/android-sdk/platforms/android-21/android.jar \
+          @sources.txt build/gen/com/mojang/minecraftpe/R.java
+    
+    - name: Create DEX file
+      run: |
+        dx --dex --output=build/classes.dex build/classes/
+    
+    - name: Package APK
+      run: |
+        aapt package -f \
+          -M project/android_java/AndroidManifest.xml \
+          -S project/android_java/res \
+          -I /usr/lib/android-sdk/platforms/android-21/android.jar \
+          -F build/minecraftpe-unsigned.apk
+        
+        cd build
+        aapt add minecraftpe-unsigned.apk classes.dex
+        aapt add minecraftpe-unsigned.apk lib/arm64-v8a/libminecraftpe.so
+        
+        cd ../data
+        zip -r ../build/minecraftpe-unsigned.apk * -x "*.git*"
+    
+    - name: Sign APK
+      run: |
+        keytool -genkeypair -keystore build/debug.keystore \
+          -storepass android -keypass android \
+          -alias androiddebugkey -keyalg RSA -keysize 2048 \
+          -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        
+        jarsigner -keystore build/debug.keystore \
+          -storepass android -keypass android \
+          build/minecraftpe-unsigned.apk androiddebugkey
+        
+        zipalign -f 4 build/minecraftpe-unsigned.apk build/minecraftpe-INFINITE-debug.apk
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: MinecraftPE-Infinite-World
+        path: build/minecraftpe-INFINITE-debug.apk
+        retention-days: 30

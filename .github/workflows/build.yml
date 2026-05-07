@@ -3,33 +3,24 @@ name: Build Minecraft PE APK
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-
-    - name: Build with Gradle (from root)
-      run: gradle assembleDebug --stacktrace
-
-    - name: Upload APK
+    - uses: android-actions/setup-android@v2
+    - name: Setup Gradle wrapper
+      run: chmod +x gradlew 2>/dev/null || gradle wrapper --gradle-version 8.7
+    - name: Build
+      run: ./gradlew assembleDebug --stacktrace
+    - uses: actions/upload-artifact@v4
       if: success()
-      uses: actions/upload-artifact@v4
       with:
         name: MinecraftPE-APK
         path: mcpe64-INFINITE-WORLD/app/build/outputs/apk/debug/*.apk

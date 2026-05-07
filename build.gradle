@@ -1,4 +1,4 @@
-allprojects {
+pluginManagement {
     repositories {
         google()
         mavenCentral()
@@ -8,6 +8,14 @@ allprojects {
 
 plugins {
     id 'com.android.application' version '8.1.0' apply false
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
 }
 
 task clean(type: Delete) {

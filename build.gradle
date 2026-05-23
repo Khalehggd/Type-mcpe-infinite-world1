@@ -1,5 +1,10 @@
+// Root project build.gradle
+// NOTE: The actual build runs from mcpe64-INFINITE-WORLD/ subdirectory.
+// This file is only used if you build from the repo root.
+
 plugins {
-    id 'com.android.application' version '8.1.0' apply false
+    // Version must match settings.gradle
+    id 'com.android.application' version '8.2.0' apply false
 }
 
 allprojects {

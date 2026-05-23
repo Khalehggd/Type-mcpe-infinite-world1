@@ -3,31 +3,57 @@ name: Build Minecraft PE APK
 on:
   push:
     branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
 
-    - uses: android-actions/setup-android@v2
+      # Use the official action — it sets up SDK + sdkmanager correctly
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-    - name: Install Gradle 8.7
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '8.7'
+      - name: Install NDK and CMake
+        run: |
+          sdkmanager "ndk;26.1.10909125" "cmake;3.22.1"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/26.1.10909125" >> $GITHUB_ENV
 
-    - name: Build
-      run: gradle assembleDebug --stacktrace
+      - name: Set up Gradle 8.7
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
 
-    - uses: actions/upload-artifact@v4
-      if: success()
-      with:
-        name: MinecraftPE-APK
-        path: mcpe64-INFINITE-WORLD/app/build/outputs/apk/debug/*.apk
+      - name: Build APK
+        working-directory: mcpe64-INFINITE-WORLD
+        run: gradle assembleDebug --stacktrace
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MinecraftPE-Infinite-World-APK
+          path: mcpe64-INFINITE-WORLD/app/build/outputs/apk/debug/*.apk
+          retention-days: 30
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            mcpe64-INFINITE-WORLD/app/build/reports/
+            mcpe64-INFINITE-WORLD/app/.cxx/
+          retention-days: 7
